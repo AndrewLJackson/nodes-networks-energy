@@ -14,6 +14,9 @@ graphics.off() # close open graphics windows from previous runs
 
 # This script requires installation of these packages, along with their
 # dependencies
+# in the R command window, type
+# install.packages(c('deSolve', 'diagram'))
+# to pull them down from the cran repository.
 library('deSolve')
 library('diagram')
 
