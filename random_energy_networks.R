@@ -22,7 +22,7 @@ library('diagram')
 # I am toying with turning this portion of code into a function
 
 # number of nodes in a network to create
-n.nodes <- 8
+n.nodes <- 7
 
 # specify the binary interaction matrix B
 # this matrix deterimes which nodes are connected.
@@ -34,7 +34,7 @@ n.nodes <- 8
 
 
 # probability of a connection
-p.connect <- 0.7
+p.connect <- 0.6
 
 B <- matrix(rbinom(n.nodes^2, 1, p.connect), ncol = n.nodes, nrow = n.nodes)
 
@@ -94,9 +94,13 @@ G.0[1] <- 1
 #-------------------------------------------------------------------------------
 
 
-energy.flow <- function(Time, G, Pars) {
+energy.flow <- function(t, G, Pars) {
   with(as.list(Pars), {
 
+    if (t >= event.t) {
+      a[,node.loss.id] <- 0
+      a[node.loss.id] <- 0
+      }
     dG <- (a %*% G) + f
 
     return(list(dG))
@@ -104,16 +108,44 @@ energy.flow <- function(Time, G, Pars) {
 }
 
 # define the parameters for passing to the energy.flow() function
-pars  <- c(a = a, f = f)
+# The following parameters control the perturbation:
+#     node.hit = integer identifying which node will be proportionally changed
+#     prop.fall = proportional change to node.hit. If == 1, then no change
+#     node.loss.id = integer identifying which node to remove entirely
+#     event.t = time point to lose node.
+# Notes: set even.t = Inf to not apply any perturbation.
+# If removing a node, then you should also use node.hit = node.loss.id and 
+# prop.fall = 0 to set its state variable value to zero, in addition to removing
+# its connections. You can turn off a proportional change in any node by 
+# setting prop.fail = 1.
+pars  <- c(a = a, f = f,
+           node.hit = 2, prop.fall = 1,
+           node.loss.id = NA, event.t = Inf)
 
 # initial conditions of the system
 yini  <- c(G = G.0)
 
 # specify the times at which we want to evaluate the system
-times <- seq(0, 30, length = 100)
+times <- seq(1, 100, length = 100)
 
+
+# Include a perturbation event function which can be evaluated at 
+# defined time points in the call to ode()
+node.fall <- function(t, G, pars){
+  with (as.list(pars),{
+    G[node.hit] <- G[node.hit] * prop.fall
+    return(G)
+  })
+
+}
+
+
+#*******************************************************************************
+# This is where the system is actually evaluated.
 # Simulate the system over time with a call to ode()
-out   <- ode(yini, times, energy.flow, pars)
+out   <- ode(yini, times, energy.flow, pars,
+             events = list(func = node.fall, time = pars["event.t"]))
+#*******************************************************************************
 
 #-------------------------------------------------------------------------------
 # Plot the results, and the network structure
@@ -124,7 +156,13 @@ out   <- ode(yini, times, energy.flow, pars)
 dev.new(height = 5, width = 5)
 matplot(out[,1], out[,2:(n.nodes+1)], type="l", main = "ODE model", 
 	     xlab = "time", ylab = "energy in each node", 
-       lwd = c(2, rep(1, n.nodes-1)))
+       lwd = c(2, rep(1, n.nodes-1)), bty = "L",
+       xlim=c(0, max(times) * 1.2))
+# Add a grey vertical line to indicate the time at which the perturbation event
+# is to be applied (if there is one specified)
+abline(v = pars["event.t"], col="grey")
+text((max(times)*1.05 + 2*(1:n.nodes)),
+      out[nrow(out), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
 
 #-------------------------------------------------------------------------------
 # Use pkg 'diagram' to visualise the network
@@ -135,12 +173,9 @@ a.cnx <- a
 diag(a.cnx) <- 0
 a.self <- diag(a)
 
-# specify and store coordinates of the boxes
-pos <- coordinates(N = n.nodes, relsize = 0.75)
 
 dev.new()
 pp <- plotmat(round(a.cnx, digits = 2),
-               pos = pos,
                curve = 0.1,
                lwd = 1, box.lwd = 2, cex.txt = F,
                box.type = "square", box.prop = 0.8,  box.size = 0.05,
@@ -155,7 +190,8 @@ pp <- plotmat(round(a.cnx, digits = 2),
                main = "Energy network", 
                box.col = c('red', rep('white',n.nodes-1)))
 
-# add arrows representing gain from the environment
+
+# add red arrows representing gain from the environment
 dx <- 0.06
 dy <- 0.06
 
@@ -172,14 +208,14 @@ for ( i in 1:n.nodes){
 }
 
 
-# add arrows representing loss to the environment
+# add blue arrows representing loss to the environment
 for ( i in 1:n.nodes){
   if (a.self[i]) {
     straightarrow(from = c(pp$rect[i,"xleft"], 
                            pp$rect[i,"ytop"]),
                   to =   c(pp$rect[i,"xleft"] - dx,
                            pp$rect[i,"ytop"]  + dy),
-                           lcol = "red", arr.col = "red", lty = 3,
+                           lcol = "blue", arr.col = "blue", lty = 3,
                            arr.pos = 1, , arr.type = "triangle"
                   )
   }
