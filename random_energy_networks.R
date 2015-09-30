@@ -10,7 +10,7 @@
 # Initiation
 rm(list=ls())  # clear memory
 graphics.off() # close open graphics windows from previous runs
-#set.seed(1)   # for debugging
+set.seed(1)   # for debugging
 
 # This script requires installation of these packages, along with their
 # dependencies
@@ -69,7 +69,7 @@ a <- aa * B
 
 # Each node loses energy. This simulates energy loss during transfer,
 # and also potentially acts as a feedback of energy to the environment,
-# but that would need some re-coding to acheive.
+# but that would need some re-coding to achieve.
 e.ub <- 0.15 # energy loss lower bound
 e.lb <- 0.05 # energy loss upper bound
 e <- runif(n.nodes, e.lb, e.ub)
@@ -104,7 +104,7 @@ energy.flow <- function(t, G, Pars) {
       a[,node.loss.id] <- 0
       a[node.loss.id] <- 0
       }
-    dG <- (a %*% G) + f
+    dG <- (a %*% G) + f #+ c(rnorm(0,0.1), rep(0, nrow(G-1)))
 
     return(list(dG))
   })
@@ -122,14 +122,18 @@ energy.flow <- function(t, G, Pars) {
 # its connections. You can turn off a proportional change in any node by 
 # setting prop.fail = 1.
 pars  <- c(a = a, f = f,
-           node.hit = 2, prop.fall = 1,
-           node.loss.id = NA, event.t = Inf)
+           node.hit = 1, prop.fall = 0.1,
+           node.loss.id = NA, event.t = 100)
 
 # initial conditions of the system
 yini  <- c(G = G.0)
 
 # specify the times at which we want to evaluate the system
-times <- seq(1, 100, length = 100)
+times <- seq(1, 200, by = 1)
+
+# events currently hardcoded to occur at t=100, so here i 
+# get it to evaluate the system at t=100+error
+times <- sort(c(times, 100 + .Machine$double.eps ))
 
 
 # Include a perturbation event function which can be evaluated at 
@@ -219,7 +223,7 @@ for ( i in 1:n.nodes){
                   to =   c(pp$rect[i,"xleft"] - dx,
                            pp$rect[i,"ytop"]  + dy),
                            lcol = "blue", arr.col = "blue", lty = 3,
-                           arr.pos = 1, , arr.type = "triangle"
+                           arr.pos = 1, arr.type = "triangle"
                   )
   }
 }
