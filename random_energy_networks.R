@@ -25,7 +25,7 @@ library('diagram')
 # I am toying with turning this portion of code into a function
 
 # number of nodes in a network to create
-n.nodes <- 7
+n.nodes <- 10
 
 # specify the binary interaction matrix B
 # this matrix deterimes which nodes are connected.
@@ -156,11 +156,11 @@ out   <- ode(yini, times, energy.flow, pars,
 
 
 # Plot the energy per node over time
-dev.new(height = 5, width = 5)
+#dev.new(height = 5, width = 5)
 matplot(out[,1], out[,2:(n.nodes+1)], type="l", main = "ODE model", 
 	     xlab = "time", ylab = "energy in each node", 
        lwd = c(2, rep(1, n.nodes-1)), bty = "L",
-       xlim=c(0, max(times) * 1.2))
+       xlim=c(0, max(times) * 1.3))
 # Add a grey vertical line to indicate the time at which the perturbation event
 # is to be applied (if there is one specified)
 abline(v = pars["event.t"], col="grey")
@@ -177,7 +177,7 @@ diag(a.cnx) <- 0
 a.self <- diag(a)
 
 
-dev.new()
+#dev.new()
 pp <- plotmat(round(a.cnx, digits = 2),
                curve = 0.1,
                lwd = 1, box.lwd = 2, cex.txt = F,
