@@ -91,6 +91,8 @@ G.0 <- matrix(0, nrow = n.nodes, ncol = 1)
 G.0[1] <- 1
 
 
+# solve for equilibrium
+G.star <- -solve(a) %*% f
 
 #-------------------------------------------------------------------------------
 # Evaluate the network as a set of coupled ODEs
@@ -170,6 +172,9 @@ matplot(out[,1], out[,2:(n.nodes+1)], type="l", main = "ODE model",
 abline(v = pars["event.t"], col="grey")
 text((max(times)*1.05 + 2*(1:n.nodes)),
       out[nrow(out), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
+
+# add the analytically derived equilibrium points
+points(rep(max(times), length(G.star)), G.star, pch = 19)
 
 #-------------------------------------------------------------------------------
 # Use pkg 'diagram' to visualise the network
