@@ -10,7 +10,7 @@
 # Initiation
 rm(list=ls())  # clear memory
 graphics.off() # close open graphics windows from previous runs
-#set.seed(1)   # for debugging
+set.seed(1)   # for debugging
 
 # This script requires installation of these packages, along with their
 # dependencies
@@ -25,7 +25,7 @@ library('diagram')
 # I am toying with turning this portion of code into a function
 
 # number of nodes in a network to create
-n.nodes <- 7
+n.nodes <- 10
 
 # specify the binary interaction matrix B
 # this matrix deterimes which nodes are connected.
@@ -69,7 +69,7 @@ a <- aa * B
 
 # Each node loses energy. This simulates energy loss during transfer,
 # and also potentially acts as a feedback of energy to the environment,
-# but that would need some re-coding to acheive.
+# but that would need some re-coding to achieve.
 e.ub <- 0.15 # energy loss lower bound
 e.lb <- 0.05 # energy loss upper bound
 e <- runif(n.nodes, e.lb, e.ub)
@@ -91,6 +91,8 @@ G.0 <- matrix(0, nrow = n.nodes, ncol = 1)
 G.0[1] <- 1
 
 
+# solve for equilibrium
+G.star <- -solve(a) %*% f
 
 #-------------------------------------------------------------------------------
 # Evaluate the network as a set of coupled ODEs
@@ -104,7 +106,7 @@ energy.flow <- function(t, G, Pars) {
       a[,node.loss.id] <- 0
       a[node.loss.id] <- 0
       }
-    dG <- (a %*% G) + f
+    dG <- (a %*% G) + f #+ c(rnorm(0,0.1), rep(0, nrow(G-1)))
 
     return(list(dG))
   })
@@ -122,14 +124,18 @@ energy.flow <- function(t, G, Pars) {
 # its connections. You can turn off a proportional change in any node by 
 # setting prop.fail = 1.
 pars  <- c(a = a, f = f,
-           node.hit = 2, prop.fall = 1,
-           node.loss.id = NA, event.t = Inf)
+           node.hit = 1, prop.fall = 0.1,
+           node.loss.id = NA, event.t = 100)
 
 # initial conditions of the system
 yini  <- c(G = G.0)
 
 # specify the times at which we want to evaluate the system
-times <- seq(1, 100, length = 100)
+times <- seq(1, 200, by = 1)
+
+# events currently hardcoded to occur at t=100, so here i 
+# get it to evaluate the system at t=100+error
+times <- sort(c(times, 100 + .Machine$double.eps ))
 
 
 # Include a perturbation event function which can be evaluated at 
@@ -156,16 +162,19 @@ out   <- ode(yini, times, energy.flow, pars,
 
 
 # Plot the energy per node over time
-dev.new(height = 5, width = 5)
+#dev.new(height = 5, width = 5)
 matplot(out[,1], out[,2:(n.nodes+1)], type="l", main = "ODE model", 
 	     xlab = "time", ylab = "energy in each node", 
        lwd = c(2, rep(1, n.nodes-1)), bty = "L",
-       xlim=c(0, max(times) * 1.2))
+       xlim=c(0, max(times) * 1.3))
 # Add a grey vertical line to indicate the time at which the perturbation event
 # is to be applied (if there is one specified)
 abline(v = pars["event.t"], col="grey")
 text((max(times)*1.05 + 2*(1:n.nodes)),
       out[nrow(out), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
+
+# add the analytically derived equilibrium points
+points(rep(max(times), length(G.star)), G.star, pch = 19)
 
 #-------------------------------------------------------------------------------
 # Use pkg 'diagram' to visualise the network
@@ -177,7 +186,7 @@ diag(a.cnx) <- 0
 a.self <- diag(a)
 
 
-dev.new()
+#dev.new()
 pp <- plotmat(round(a.cnx, digits = 2),
                curve = 0.1,
                lwd = 1, box.lwd = 2, cex.txt = F,
@@ -219,7 +228,7 @@ for ( i in 1:n.nodes){
                   to =   c(pp$rect[i,"xleft"] - dx,
                            pp$rect[i,"ytop"]  + dy),
                            lcol = "blue", arr.col = "blue", lty = 3,
-                           arr.pos = 1, , arr.type = "triangle"
+                           arr.pos = 1, arr.type = "triangle"
                   )
   }
 }
