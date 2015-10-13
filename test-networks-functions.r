@@ -21,7 +21,7 @@ source('odeEquations.r')
 # Define parameters for the Transition Matrix
 
 # number of nodes in a network to create
-n.nodes <- 10
+n.nodes <- 8
 
 # probability of a connection
 p.connect <- 0.6
