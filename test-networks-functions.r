@@ -48,8 +48,11 @@ f <- double(n.nodes)
 # in this simple model, only node1 acquires energy from the environment
 f[1] <- 1 
 
+# AJ - need to find a quick and easy way to add noise
 # determine noise to apply to node == 1
 
+# check that the system is stable
+if (!all(eigen(a)$values <= 0)){warning("One of the eigen values is positive")}
 
 # solve for equilibrium
 G.star <- -solve(a) %*% f
@@ -83,6 +86,12 @@ times <- seq(1, 200, by = 1)
 # events currently hardcoded to occur at t=100, so here i 
 # get it to evaluate the system at t=100+error
 times <- sort(c(times, 100 + .Machine$double.eps ))
+
+# AJ - Adding noise
+# Either: 1) use something like tuneR::noise() to generate a time series, then
+# approxfun() within the ode defined function to estimated noise at time=t; or
+# 2) check out the book that goes with package sde and use the BM or OU 
+# processes from that. I am leaning towards the latter.
 
 #-------------------------------------------------------------------------------
 # Evaluate the network as a set of coupled ODEs
