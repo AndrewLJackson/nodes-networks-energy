@@ -1,7 +1,10 @@
 energyFlow <- function(t, G, Pars) {
-  with(as.list(Pars), {
+  with(Pars, {
 
-    dG <- (a %*% G) + f
+    # e is the noise term applied only to node==1
+    e[1] <- noiseFun(t)
+      
+    dG <- (a %*% G) + f + e #+ noiseFun(t)
     
     return(list(dG))
   })
