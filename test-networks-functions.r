@@ -17,6 +17,7 @@ library('sde')
 source('generateRandomTransitionMatrix.r')
 source('odeEquations.r')
 source('genNoiseFun.r')
+source('energyStabilityMetrics.r')
 
 
 #-------------------------------------------------------------------------------
@@ -131,12 +132,27 @@ euc.dist <- sqrt(rowSums( difference^ 2))
 
 plot(times, euc.dist, type = "l")
 
-max.idx <- which.max(euc.dist)
-max.deflect <- euc.dist[max.idx]
-max.deflect.time <- times[max.idx]
 
-tol <- 
+stability <- energyStabilityMetrics(euc.dist)
 
+abline(h=stability$resistance["deflection"], lty = 2, col = "red")
+
+
+lines(rep(stability$resilience["decay"],2), 
+      c(0, stability$resistance["deflection"]/exp(1)), 
+      col = "red")
+lines(c(0, stability$resilience["decay"]), 
+      rep(stability$resistance["deflection"]/exp(1), 2), 
+      col = "red")
+
+
+
+# ------------------------------------------------------------------------------
+
+stability <- energyStabilityMetrics(euc.dist)
+
+
+  
 #-------------------------------------------------------------------------------
 # Plot the results, and the network structure
 #-------------------------------------------------------------------------------

@@ -13,15 +13,18 @@
 #' @param s.list A list containing a set of expressions specifying the sigma 
 #'   fuction for passing to \code{\link{sde:sde.sim}}
 #' @param pars the set of parameters for passing to \code{\link{ode}}
-#' @param times the set of time points at which the ode is to be evaluated at:
+#' @param times the set of time points at which the ode is to be evaluated at: 
 #'   for passing to \code{\link{ode}}
 #'   
-#' @return A list of matrices for each evaluation of the system, along with
-#'   their corresponding noise series, and random seed.
+#' @return A list of matrices for each evaluation of the system over time and
+#'   their corresponding stability metrics of resistance and resilience.
 #'   
 
 
 evalPairedSims <- function(d.list, s.list, pars, times){
+  
+  # prep output list
+  out <- list()
   
   # get the current system time for the seed to use for all subsequent noise
   # series in this repeated experiment.
@@ -37,20 +40,35 @@ evalPairedSims <- function(d.list, s.list, pars, times){
       set.seed(seed)
       
       # generate the noise funcition
-      ee <- genNoiseFun(d.list[[i]], s.list[[j]], N = 10^3, 
+      pars$noiseF <- genNoiseFun(d.list[[i]], s.list[[j]], N = 10^3, 
                         min(times), max(times))
       
       
+      #-------------------------------------------------------------------------
+      # Evaluate the network as a set of coupled ODEs for perturbed and control
+      #-------------------------------------------------------------------------
+      
+      # Simulate the system over time with a call to ode()
+      perturbed <- ode(yini, times, energyFlow, pars,
+                       events = list(func = node.fall, time = pars["event.t"]))
+      
+      control   <- ode(yini, times, energyFlow, pars)
+      
+      #-------------------------------------------------------------------------
+      # Calculate stability metrics
+      #-------------------------------------------------------------------------
+      
+      difference <- perturbed[,2:(n.nodes+1)] - control[,2:(n.nodes+1)]
+      
+      euc.dist <- sqrt(rowSums( difference^ 2))
+      
+      stability <- energyStabilityMetrics(euc.dist)
       
       
     }
     
   }
   
-  set.seed(seed)
-  
-  # Generate the noise function
-  
-  
+
   
 }
