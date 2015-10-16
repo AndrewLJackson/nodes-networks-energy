@@ -21,14 +21,20 @@
 #'   
 
 
-evalPairedSims <- function(d.list, s.list, pars, times){
+evalPairedSims <- function(d.list, s.list, pars, times, yini){
   
-  # prep output list
+  # prep output list and matrices
   out <- list()
+  n.r <- length(d.list) * length(s.list)
+  resistance <- matrix(NA, n.r, 2)
+  resilience <- matrix(NA, n.r, 3)
   
   # get the current system time for the seed to use for all subsequent noise
   # series in this repeated experiment.
-  seed <- Sys.time
+  seed <- round(as.numeric(Sys.time()))
+  
+  # a counter 
+  ct <- 1
   
   # loop over d.list
   for (i in 1:length(d.list)){
@@ -40,9 +46,10 @@ evalPairedSims <- function(d.list, s.list, pars, times){
       set.seed(seed)
       
       # generate the noise funcition
-      pars$noiseF <- genNoiseFun(d.list[[i]], s.list[[j]], N = 10^3, 
+      ee <- genNoiseFun(d.list[[i]], s.list[[j]], N = 10^3, 
                         min(times), max(times))
       
+      pars$noiseFun <- ee
       
       #-------------------------------------------------------------------------
       # Evaluate the network as a set of coupled ODEs for perturbed and control
@@ -64,11 +71,15 @@ evalPairedSims <- function(d.list, s.list, pars, times){
       
       stability <- energyStabilityMetrics(euc.dist)
       
+      resistance[ct, ] <- stability$resistance
+      resilience[ct, ] <- stability$resilience
       
+      ct <- ct + 1
     }
     
   }
   
-
-  
+out$resistance <- resistance
+out$resilience <- resilience
+return(out)
 }

@@ -15,7 +15,7 @@ energyFlow <- function(t, G, Pars) {
 node.fall <- function(t, G, pars){
   with (as.list(pars),{
     G[node.hit] <- G[node.hit] * prop.fall
-    return(G)
+    return(as.vector(G))
   })
   
 }

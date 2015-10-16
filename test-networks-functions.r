@@ -86,7 +86,7 @@ times <- sort(c(times, 100 + .Machine$double.eps ))
 
 d <- expression(0 - 20 * x)
 
-s <- expression(0.1) 
+s <- expression(1) 
 
 ee <- genNoiseFun(d, s, N=10^3, min(times), max(times))
 
