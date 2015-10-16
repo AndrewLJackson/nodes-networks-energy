@@ -123,7 +123,19 @@ control   <- ode(yini, times, energyFlow, pars)
 # Calculate stability metrics
 #-------------------------------------------------------------------------------
 
+# euclidean distance
 
+difference <- perturbed[,2:(n.nodes+1)] - control[,2:(n.nodes+1)]
+
+euc.dist <- sqrt(rowSums( difference^ 2))
+
+plot(times, euc.dist, type = "l")
+
+max.idx <- which.max(euc.dist)
+max.deflect <- euc.dist[max.idx]
+max.deflect.time <- times[max.idx]
+
+tol <- 
 
 #-------------------------------------------------------------------------------
 # Plot the results, and the network structure
