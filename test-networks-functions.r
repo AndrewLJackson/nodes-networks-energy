@@ -71,7 +71,7 @@ G.star <- -solve(a) %*% f
 yini  <- c(G = G.star)
 
 # specify the times at which we want to evaluate the system
-times <- seq(1, 200, by = 0.25)
+times <- seq(1, 500, by = 0.25)
 
 # events currently hardcoded to occur at t=100, so here i 
 # get it to evaluate the system at t=100+error
@@ -84,11 +84,11 @@ times <- sort(c(times, 100 + .Machine$double.eps ))
 # 2) check out the book that goes with package sde and use the BM or OU 
 # processes from that. I am leaning towards the latter.
 
-d <- expression(0 - 20 * x)
+d <- expression(0 - 100 * x)
 
 s <- expression(1) 
 
-ee <- genNoiseFun(d, s, N=10^3, min(times), max(times))
+ee <- genNoiseFun(d, s, N=10^4, min(times), max(times))
 
 
 
@@ -160,6 +160,7 @@ stability <- energyStabilityMetrics(euc.dist)
 
 # Plot the energy per node over time
 #dev.new(height = 5, width = 5)
+par(mfrow=c(1,2))
 matplot(perturbed[,1], perturbed[,2:(n.nodes+1)], type="l",
         main = "Perturbed System Dynamics", 
         xlab = "time", ylab = "energy in each node", 
@@ -168,12 +169,28 @@ matplot(perturbed[,1], perturbed[,2:(n.nodes+1)], type="l",
 # Add a grey vertical line to indicate the time at which the perturbation event
 # is to be applied (if there is one specified)
 abline(v = pars["event.t"], col="grey")
-text((max(times)*1.05 + 2*(1:n.nodes)),
+text((max(times)*1.1 + 2*(1:n.nodes)),
      perturbed[nrow(perturbed), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
 
 # add the analytically derived equilibrium points
 points(rep(min(times), length(G.star)), G.star, pch = 19)
 points(rep(max(times), length(G.star)), G.star, pch = 19)
+
+matplot(control[,1], control[,2:(n.nodes+1)], type="l",
+        main = "Perturbed System Dynamics", 
+        xlab = "time", ylab = "energy in each node", 
+        lwd = c(2, rep(1, n.nodes-1)), bty = "L",
+        xlim=c(0, max(times) * 1.3))
+# Add a grey vertical line to indicate the time at which the perturbation event
+# is to be applied (if there is one specified)
+abline(v = pars["event.t"], col="grey")
+text((max(times)*1.1 + 2*(1:n.nodes)),
+     control[nrow(control), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
+
+# add the analytically derived equilibrium points
+points(rep(min(times), length(G.star)), G.star, pch = 19)
+points(rep(max(times), length(G.star)), G.star, pch = 19)
+
 
 # ------------------------------------------------------------------------------
 # Plot perturbed - control

@@ -27,12 +27,12 @@ source('evalPairedSims.r')
 # global parameters
 
 # replicates
-reps <- 1
+reps <- 100
 
 # set of sigma values for noise generation
 s.list <- list(expression(0.1), expression(5), expression(10.0))
 
-d.list <- list( expression(0 - 20 * x) )
+d.list <- list( expression(0 - 100 * x) )
 
 # specify the times at which we want to evaluate the system
 times <- seq(1, 500, by = 0.25)
@@ -71,6 +71,17 @@ f[1] <- 1
 # loop over replicates
 # ------------------------------------------------------------------------------
 
+# prep results matrices.... lazily here
+experiments <- length(d.list)*length(s.list) 
+
+resistance <- matrix(NA, reps*experiments, 2)
+resilience <- matrix(NA, reps*experiments, 3)
+sigma <- matrix(NA, reps*experiments, 1)
+
+# a counter
+ct <- 1
+ct.rep <- 0
+
 for (i in 1:reps){
   
   a <- generateRandomTransitionMatrix(n.nodes, p.connect, upper.tri = FALSE,
@@ -98,5 +109,28 @@ for (i in 1:reps){
   
   out <- evalPairedSims(d.list, s.list, pars, times, G.star)
   
+  # store results
+  resistance[ct:(ct+experiments-1), ] <- out$resistance
+  resilience[ct:(ct+experiments-1), ] <- out$resilience
+  sigma[ct:(ct+experiments-1), ] <- unlist(s.list)
   
+  # update counter
+  ct <- ct + experiments
+  ct.rep <- ct.rep + 1
+  print(ct.rep)
 }
+
+# ------------------------------------------------------------------------------
+# plot results
+# ------------------------------------------------------------------------------
+
+par(mfrow = c(2,2))
+boxplot(resistance[,1] ~ sigma, main = "resistance", ylab = "euclidean distance")
+boxplot(resilience[,1] ~ sigma, main = "resilience (decay)", ylab = "time")
+boxplot(resilience[,2] ~ sigma, main = "resilience (quantile)", ylab = "time")
+boxplot(resilience[,3] ~ sigma, main = "resilience (absolute)", ylab = "time")
+
+
+
+
+

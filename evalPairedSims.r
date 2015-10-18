@@ -26,9 +26,12 @@ evalPairedSims <- function(d.list, s.list, pars, times, yini){
   # prep output list and matrices
   out <- list()
   n.r <- length(d.list) * length(s.list)
-  resistance <- matrix(NA, n.r, 2)
-  resilience <- matrix(NA, n.r, 3)
   
+  resistance <- matrix(NA, n.r, 2)
+  colnames(resistance) <- c("deflection","time")
+  
+  resilience <- matrix(NA, n.r, 3)
+  colnames(resilience) <- c("exp.decay", "quantile", "absolute")
   # get the current system time for the seed to use for all subsequent noise
   # series in this repeated experiment.
   seed <- round(as.numeric(Sys.time()))
@@ -65,7 +68,7 @@ evalPairedSims <- function(d.list, s.list, pars, times, yini){
       # Calculate stability metrics
       #-------------------------------------------------------------------------
       
-      difference <- perturbed[,2:(n.nodes+1)] - control[,2:(n.nodes+1)]
+      difference <- perturbed[,3:(n.nodes+1)] - control[,3:(n.nodes+1)]
       
       euc.dist <- sqrt(rowSums( difference^ 2))
       
