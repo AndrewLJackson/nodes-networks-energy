@@ -68,7 +68,7 @@ G.star <- -solve(a) %*% f
 
 
 # initial conditions of the system at equilibrium
-yini  <- c(G = G.star)
+yini  <- c(1, rep(0, length(G.Star) - 1 )) #c(G = G.star)
 
 # specify the times at which we want to evaluate the system
 times <- seq(1, 500, by = 0.25)
