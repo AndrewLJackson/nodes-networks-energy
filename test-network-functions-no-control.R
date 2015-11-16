@@ -7,7 +7,7 @@
 # Initiation
 rm(list=ls())  # clear memory
 graphics.off() # close open graphics windows from previous runs
-set.seed(1)   # for debugging
+set.seed(2)   # for debugging
 
 # This script requires installation of these packages, along with their
 # dependencies
@@ -22,7 +22,8 @@ library('sde')
 source('generateRandomTransitionMatrix.r')
 source('odeEquations.r')
 source('genNoiseFun.r')
-source('energyStabilityMetrics.r')
+source('eucDistance.R')
+source('energyStabilityMetricsNoControl.r')
 
 
 #-------------------------------------------------------------------------------
@@ -71,7 +72,7 @@ G.star <- -solve(a) %*% f
 
 
 # initial conditions of the system at equilibrium
-yini  <- c(1, rep(0, length(G.Star) - 1 )) #c(G = G.star)
+yini  <- c(G = G.star)
 
 # specify the times at which we want to evaluate the system
 times <- seq(1, 500, by = 0.25)
@@ -105,8 +106,9 @@ ee <- genNoiseFun(d, s, N=10^4, min(times), max(times))
 # prop.fall = 0 to set its state variable value to zero, in addition to removing
 # its connections. You can turn off a proportional change in any node by 
 # setting prop.fail = 1.
+t.disturb <- 200
 pars  <- list(a = a, f = f,
-           node.hit = 1, prop.fall = 0.1, event.t = 100,
+           node.hit = 1, prop.fall = 0.1, event.t = t.disturb,
            e = double(n.nodes),
            noiseFun = ee)
 
@@ -130,12 +132,11 @@ perturbed <- ode(yini, times, energyFlow, pars,
 
 mu <- colMeans(perturbed[times < pars$event.t, 2:(n.nodes+1)])
 
-difference <- perturbed[,2:(n.nodes+1)] - mu
+difference <- perturbed[, 2:(n.nodes+1)]
 
-euc.dist <- sqrt(rowSums( difference ^ 2))
+euc.dist <- eucDistance(mu, difference)
 
 plot(times, euc.dist, type = "l")
-
 
 stability <- energyStabilityMetricsNoControl(euc.dist, times, t.disturb)
 
@@ -150,12 +151,36 @@ lines(c(0, stability$resilience["decay"]),
       rep(stability$resistance["deflection"]/exp(1), 2), 
       col = "red")
 
+lines(c(t.disturb, max(times)), 
+      rep(stability$q.95, 2),
+      col = "blue")
+
+lines(rep(stability$resilience["quant"], 2),
+      c(0, stability$q.95),
+      col = "blue",
+      lty = 2, lwd = 2)
 
 
 # ------------------------------------------------------------------------------
+# Plot subset focussed on perturbation
+t1 <- t.disturb - 50
+t2 <- 250
 
-stability <- energyStabilityMetrics(euc.dist)
+plot(times[times>= t1 & times <= t2],
+     euc.dist[times>= t1 & times <= t2],
+     type = "l")
 
+# smo <- lowess(times[times>= t1 & times <= t2], 
+#               euc.dist[times>= t1 & times <= t2], 
+#               f = 2/3)
+# 
+# lines(smo, lwd = 2, lty = 2, col = "red")
+
+
+
+
+
+# ------------------------------------------------------------------------------
 
   
 #-------------------------------------------------------------------------------
