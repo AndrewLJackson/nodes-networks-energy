@@ -90,7 +90,7 @@ times <- sort(c(times, 100 + .Machine$double.eps ))
 
 d <- expression(0 - 100 * x)
 
-s <- expression(1) 
+s <- expression(5) 
 
 ee <- genNoiseFun(d, s, N=10^4, min(times), max(times))
 
@@ -160,6 +160,45 @@ lines(rep(stability$resilience["quant"], 2),
       col = "blue",
       lty = 2, lwd = 2)
 
+#-------------------------------------------------------------------------------
+# Zoom in on Calculation of stability metrics
+#-------------------------------------------------------------------------------
+
+# euclidean distance to mean of pre-perturbation behaviour
+
+mu <- colMeans(perturbed[times < pars$event.t, 2:(n.nodes+1)])
+
+difference <- perturbed[, 2:(n.nodes+1)]
+
+euc.dist <- eucDistance(mu, difference)
+
+st <- 190
+ed <- 250
+do.these <- times > st & times < ed
+
+plot(times[do.these], euc.dist[do.these], type = "l")
+
+stability <- energyStabilityMetricsNoControl(euc.dist, times, t.disturb)
+
+abline(h=stability$resistance["deflection"], lty = 2, col = "red")
+
+
+lines(rep(stability$resilience["decay"],2), 
+      c(0, stability$resistance["deflection"]/exp(1)), 
+      col = "red")
+
+lines(c(0, stability$resilience["decay"]), 
+      rep(stability$resistance["deflection"]/exp(1), 2), 
+      col = "red")
+
+lines(c(t.disturb, max(times)), 
+      rep(stability$q.95, 2),
+      col = "blue")
+
+lines(rep(stability$resilience["quant"], 2),
+      c(0, stability$q.95),
+      col = "blue",
+      lty = 2, lwd = 2)
 
 # ------------------------------------------------------------------------------
 # Plot subset focussed on perturbation

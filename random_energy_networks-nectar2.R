@@ -102,9 +102,10 @@ G.star <- -solve(a) %*% f
 energy.flow <- function(t, G, Pars) {
   with(as.list(Pars), {
 
-    if (t >= event.t) {
+    if (t >= event.t & !is.na(node.loss.id)) {
       a[,node.loss.id] <- 0
-      a[node.loss.id] <- 0
+      a[node.loss.id,] <- 0
+      G[node.loss.id] <- 0
       }
     dG <- (a %*% G) + f #+ c(rnorm(0,0.1), rep(0, nrow(G-1)))
 
@@ -124,7 +125,7 @@ energy.flow <- function(t, G, Pars) {
 # its connections. You can turn off a proportional change in any node by 
 # setting prop.fail = 1.
 pars  <- c(a = a, f = f,
-           node.hit = 1, prop.fall = 0.1,
+           node.hit = 1, prop.fall = 1,
            node.loss.id = NA, event.t = 100)
 
 # initial conditions of the system
@@ -160,22 +161,8 @@ out   <- ode(yini, times, energy.flow, pars,
 # Plot the results, and the network structure
 #-------------------------------------------------------------------------------
 
-par(mfrow=c(1,2))
+#par(mfrow=c(1,2))
 
-# Plot the energy per node over time
-#dev.new(height = 5, width = 5)
-matplot(out[,1], out[,2:(n.nodes+1)], type="l", main = "ODE model", 
-	     xlab = "time", ylab = "energy in each node", 
-       lwd = c(2, rep(1, n.nodes-1)), bty = "L",
-       xlim=c(0, max(times) * 1.3))
-# Add a grey vertical line to indicate the time at which the perturbation event
-# is to be applied (if there is one specified)
-abline(v = pars["event.t"], col="grey")
-text((max(times)*1.05 + 2*(1:n.nodes)),
-      out[nrow(out), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
-
-# add the analytically derived equilibrium points
-points(rep(max(times), length(G.star)), G.star, pch = 19)
 
 #-------------------------------------------------------------------------------
 # Use pkg 'diagram' to visualise the network
@@ -235,8 +222,21 @@ for ( i in 1:n.nodes){
 }
 
 
+#-------------------------------------------------------------------------------
+# Plot the energy per node over time
+#dev.new(height = 5, width = 5)
+matplot(out[,1], out[,2:(n.nodes+1)], type="l", main = "ODE model", 
+        xlab = "time", ylab = "energy in each node", 
+        lwd = c(2, rep(1, n.nodes-1)), bty = "L",
+        xlim=c(0, max(times) * 1.3))
+# Add a grey vertical line to indicate the time at which the perturbation event
+# is to be applied (if there is one specified)
+abline(v = pars["event.t"], col="grey")
+text((max(times)*1.05 + 2*(1:n.nodes)),
+     out[nrow(out), 2:(n.nodes+1)], 1:n.nodes, cex = 0.75)
 
-
+# add the analytically derived equilibrium points
+points(rep(max(times), length(G.star)), G.star, pch = 19)
 
 
 
